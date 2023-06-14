@@ -12,6 +12,19 @@ def start(udpate: Update, context: CallbackContext):
         text='Hello <b>{}</b>!\n\nselect a topic for vocabulary'.format(udpate.message.from_user.first_name),
         reply_markup=inline_keyboard)
 
+
+def start_topic(udpate: Update, context: CallbackContext):
+    query = udpate.callback_query
+    topic = query.data.split(':')[1]
+
+    inline_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton('Words', callback_data=f'words:{topic}'),InlineKeyboardButton('start', callback_data=f'start:{topic}')],
+    ])
+    query.message.reply_html(
+        text='Topic: <b>{}</b>\n\nselect an action'.format(topic),
+        reply_markup=inline_keyboard
+    )
+
 def start_vocabulary(udpate: Update, context: CallbackContext):
     query = udpate.callback_query
     topic = query.data.split(':')[1]
@@ -60,3 +73,14 @@ def back_word(udpate: Update, context: CallbackContext):
 def close(udpate: Update, context: CallbackContext):
     query = udpate.callback_query
     query.message.delete()
+
+
+def send_all_words_in_topic(update: Update, context: CallbackContext):
+    topic = update.callback_query.data.split(":")[1]
+    words = db.all_words(topic)
+    
+    text = f"<b>{topic}</b>\n\n"
+    for i in range(len(words)):
+        text += f"{i+1}. {words[i]['word']}\n"
+    
+    update.callback_query.message.reply_html(text=text)

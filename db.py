@@ -22,5 +22,7 @@ class VocabularyDB:
     def get_word(self, topic, word_id):
         topic = self.db.table(topic)
         return topic.get(doc_id=word_id)
-
     
+    def all_words(self, topic):
+        topic = self.db.table(topic)
+        return topic.all()
