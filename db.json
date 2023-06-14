@@ -1,0 +1,54 @@
+{
+    "Fruits": {
+        "1": {
+            "word": "Apple",
+            "meaning": "A fruit"
+        },
+        "2": {
+            "word": "Banana",
+            "meaning": "A fruit"
+        }
+    },
+    "Vegetables": {
+        "1": {
+            "word": "Carrot",
+            "meaning": "A vegetable"
+        },
+        "2": {
+            "word": "Potato",
+            "meaning": "A vegetable"
+        },
+        "3": {
+            "word": "Tomato",
+            "meaning": "A vegetable"
+        }
+    },
+    "Animals": {
+        "1": {
+            "word": "Cat",
+            "meaning": "An animal"
+        },
+        "2": {
+            "word": "Dog",
+            "meaning": "An animal"
+        },
+        "3": {
+            "word": "Elephant",
+            "meaning": "An animal"
+        }
+    },
+    "Birds": {
+        "1": {
+            "word": "Crow",
+            "meaning": "A bird"
+        },
+        "2": {
+            "word": "Dove",
+            "meaning": "A bird"
+        },
+        "3": {
+            "word": "Eagle",
+            "meaning": "A bird"
+        }
+    }
+}
