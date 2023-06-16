@@ -1,10 +1,10 @@
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
 from handlers import (
-    start, start_vocabulary, 
-    next_word, back_word, 
-    close, start_topic,
-    send_all_words_in_topic,
+    add_word,
+    start,
+    start_learning,
+    check_answer,
 )
 
 TOKEN = os.environ.get('TOKEN')
@@ -14,13 +14,10 @@ def main():
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
+    dp.add_handler(MessageHandler(Filters.photo, add_word))
     dp.add_handler(CommandHandler('start', start))
-    dp.add_handler(CallbackQueryHandler(start_topic, pattern='topic:'))
-    dp.add_handler(CallbackQueryHandler(send_all_words_in_topic, pattern='words:'))
-    dp.add_handler(CallbackQueryHandler(start_vocabulary, pattern='start:'))
-    dp.add_handler(CallbackQueryHandler(next_word, pattern='next:'))
-    dp.add_handler(CallbackQueryHandler(back_word, pattern='back:'))
-    dp.add_handler(CallbackQueryHandler(close, pattern='X'))
+    dp.add_handler(MessageHandler(Filters.text('📚 Start learning'), start_learning))
+    dp.add_handler(MessageHandler(Filters.text, check_answer))
     
 
     updater.start_polling()

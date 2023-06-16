@@ -1,86 +1,109 @@
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CallbackContext
-from db import VocabularyDB
+from db import DB
+import requests
 
-db = VocabularyDB('db.json')
+db = DB()
+URL = 'http://127.0.0.1:8000/api/v1/'
 
+def add_word(update: Update, context: CallbackContext):
+    # get user from update
+    user = update.effective_user
+    # add word to db
+    topic_name, word_name = update.message.caption.split(':')
+    url = f'{URL}words/'
+    data = {
+        'topic': topic_name,
+        'name': word_name,
+        'image': update.message.photo[-1].file_id,
+    }
+    response = requests.post(url, json=data)
+    if response.status_code == 201:
+        update.message.reply_html(
+            text=f'Word <b>{word_name}</b> added to <b>{topic_name}</b>!'
+        )
+    else:
+        update.message.reply_html(
+            text=f'Error: {response.json()}'
+        )
+    return 'add_word'
 
-def start(udpate: Update, context: CallbackContext):
-    topics = db.get_topics()
-    inline_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(topic, callback_data='topic:{}'.format(topic)) for topic in topics]])
-    udpate.message.reply_html(
-        text='Hello <b>{}</b>!\n\nselect a topic for vocabulary'.format(udpate.message.from_user.first_name),
-        reply_markup=inline_keyboard)
+def start(update: Update, context: CallbackContext):
+    # get user from update
+    user = update.effective_user
+    # set config
+    db.set_config(user.id)
 
+    # add user to db
+    url = f'{URL}students/'
+    data = {
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'username': user.username,
+        'chat_id': user.id
+    }
+    requests.post(url, json=data)
 
-def start_topic(udpate: Update, context: CallbackContext):
-    query = udpate.callback_query
-    topic = query.data.split(':')[1]
-
-    inline_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton('Words', callback_data=f'words:{topic}'),InlineKeyboardButton('start', callback_data=f'start:{topic}')],
-    ])
-    query.message.reply_html(
-        text='Topic: <b>{}</b>\n\nselect an action'.format(topic),
-        reply_markup=inline_keyboard
+    # send message
+    update.message.reply_html(
+        text=f'Assalamu alaikum, <b>{user.first_name}</b>!\n\nWelcome to <b>Vocabulary Booster Bot</b>!\n\n',
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text='📚 Start learning'),
+                    KeyboardButton(text='📝 My words')
+                ],
+                [
+                    KeyboardButton(text='📊 Statistics'),
+                    KeyboardButton(text='👨‍💻 About')
+                ]
+            ],
+            resize_keyboard=True
+        )
     )
+    return 'start'
 
-def start_vocabulary(udpate: Update, context: CallbackContext):
-    query = udpate.callback_query
-    topic = query.data.split(':')[1]
-    word = db.get_first(topic)
+def start_learning(update: Update, context: CallbackContext):
+    # get user from update
+    user = update.effective_user
+    # get word from db
+    url = f'{URL}get_random_word/{int(user.id)}/'
+    response = requests.get(url)
+    if response.status_code == 200:
+        word = response.json()
+        # set config
+        db.reset_config(chat_id=user.id, word=word['name'], word_id=word['id'])
+        # send word photo
+        update.message.reply_photo(
+            photo=word['image'],
+            caption=f'<b>What is this?</b>',
+            parse_mode='HTML',
+        )
+        return 'learning'
+    else:
+        return 'error'
 
-    inline_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton('◀️', callback_data=f'back:{topic}:{word.doc_id}'),InlineKeyboardButton('X', callback_data='X'), InlineKeyboardButton('▶️', callback_data=f'next:{topic}:{word.doc_id}')],
-    ])
-    query.message.reply_html(
-        text='<b>{}</b>\n\ndefinition: <i>{}</i>'.format(word['word'], word['meaning']),
-        reply_markup=inline_keyboard
-    )
-
-
-def next_word(udpate: Update, context: CallbackContext):
-    query = udpate.callback_query
-    topic, word_id = query.data.split(':')[1:]
-    word = db.get_word(topic, int(word_id)+1)
-
-    inline_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton('◀️', callback_data=f'back:{topic}:{word.doc_id}'),InlineKeyboardButton('X', callback_data='X'), InlineKeyboardButton('▶️', callback_data=f'next:{topic}:{word.doc_id}')],
-    ])
-    # edit message
-    query.message.edit_text(
-        text='<b>{}</b>\n\ndefinition: <i>{}</i>'.format(word['word'], word['meaning']),
-        parse_mode='HTML',
-        reply_markup=inline_keyboard
-    )
-
-
-def back_word(udpate: Update, context: CallbackContext):
-    query = udpate.callback_query
-    topic, word_id = query.data.split(':')[1:]
-    word = db.get_word(topic, int(word_id)-1)
-
-    inline_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton('◀️', callback_data=f'back:{topic}:{word.doc_id}'),InlineKeyboardButton('X', callback_data='X'), InlineKeyboardButton('▶️', callback_data=f'next:{topic}:{word.doc_id}')],
-    ])
-    query.message.edit_text(
-        text='<b>{}</b>\n\ndefinition: <i>{}</i>'.format(word['word'], word['meaning']),
-        parse_mode='HTML',
-        reply_markup=inline_keyboard
-    )
-
-
-def close(udpate: Update, context: CallbackContext):
-    query = udpate.callback_query
-    query.message.delete()
-
-
-def send_all_words_in_topic(update: Update, context: CallbackContext):
-    topic = update.callback_query.data.split(":")[1]
-    words = db.all_words(topic)
-    
-    text = f"<b>{topic}</b>\n\n"
-    for i in range(len(words)):
-        text += f"{i+1}. {words[i]['word']}\n"
-    
-    update.callback_query.message.reply_html(text=text)
+def check_answer(update: Update, context: CallbackContext):
+    # get user from update
+    user = update.effective_user
+    # show config
+    config = db.show_config(user.id)
+    # get answer
+    answer = update.message.text
+    # check answer
+    url = f'{URL}check_answer/{int(user.id)}/{config["word_id"]}/{answer}/'
+    response = requests.get(url)
+    if response.status_code == 200:
+        word = response.json()
+        if word['is_correct']:
+            # send message
+            update.message.reply_html(
+                text=f'<b>🎉 Correct!</b>'
+            )
+        else:
+            # send message
+            update.message.reply_html(
+                text=f'🙄 Wrong!\n\nCorrect answer: <b>{word["name"]}</b>'
+            )
+        # start learning
+        return start_learning(update, context)
