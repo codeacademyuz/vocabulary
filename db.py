@@ -15,12 +15,17 @@ class DB:
         if self.is_user(chat_id):
             self.reset_config(chat_id)
         else:
-            doc = Document(value={'state': 'start', 'word': None, 'word_id': None}, doc_id=chat_id)
+            doc = Document(value={'status': 'start', 'word': None, 'word_id': None}, doc_id=chat_id)
             return self.config.insert(doc)
 
-    def reset_config(self, chat_id: str, word: str = None, word_id: int = None):
+    def reset_config(self, chat_id: str, status: str = None,  word: str = None, word_id: int = None):
         if self.is_user(chat_id):
-            doc = Document(value={'state': 'start', 'word': word, 'word_id': word_id}, doc_id=chat_id)
+            value = {}
+            if status: value['status'] = status
+            if word: value['word'] = word
+            if word_id: value['word_id'] = word_id
+            
+            doc = Document(value=value, doc_id=chat_id)
             return self.config.update(doc, doc_ids=[chat_id])
         else:
             return None

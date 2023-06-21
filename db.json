@@ -1,9 +1,9 @@
 {
     "config": {
         "1258594598": {
-            "state": "start",
-            "word": "apple",
-            "word_id": 2
+            "status": "start",
+            "word": null,
+            "word_id": null
         }
     }
 }

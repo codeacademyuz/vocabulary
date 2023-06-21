@@ -10,12 +10,14 @@ from handlers import (
 TOKEN = os.environ.get('TOKEN')
 
 
+# photo topic - word
+
 def main():
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
-    dp.add_handler(MessageHandler(Filters.photo, add_word))
     dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(MessageHandler(Filters.photo, add_word))
     dp.add_handler(MessageHandler(Filters.text('📚 Start learning'), start_learning))
     dp.add_handler(MessageHandler(Filters.text, check_answer))
     
