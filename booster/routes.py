@@ -33,6 +33,8 @@ def main():
     
     dp.process_update(update)
 
+    return 'ok'
+
 
 @app.route('/set')
 def setting():
