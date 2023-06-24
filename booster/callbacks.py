@@ -182,7 +182,7 @@ def check_answer(update: Update, context: CallbackContext):
                     text=f'🙄 Wrong!\n\nCorrect answer: <b>{response.json()["answer"]}</b>'
                 )
                 # get random word
-                word = config.get_random_word()
+                word = config.get(word)
 
                 # send word
                 update.message.reply_photo(
